@@ -88,7 +88,7 @@ public function search(Request $request)
             'gener.*' => 'string|max:255',
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'pdf_path' => 'nullable|file|mimes:pdf|max:10000',
+            'pdf_path' => 'nullable|file|mimes:pdf|max:40000',
         ]);
     // التحقق إن كان الكتاب موجودًا مسبقًا
     $existing = Book::where('title', $validatedData['title'])
@@ -142,7 +142,7 @@ public function search(Request $request)
             'gener.*' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'pdf_path' => 'nullable|file|mimes:pdf|max:10000',
+            'pdf_path' => 'nullable|file|mimes:pdf|max:40000',
         ]);
 
         // تحديث بيانات الكتاب

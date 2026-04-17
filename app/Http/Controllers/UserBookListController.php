@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\UserBookList;
+use App\Notifications\ReaderLevelUp;
 use Illuminate\Http\Request;
 
 class UserBookListController extends Controller
@@ -90,15 +91,26 @@ public function add(Request $request)
         $entry = UserBookList::where('user_id', $user->id)
             ->where('book_id', $bookId)
             ->firstOrFail();
+            $oldfinishedcount  = UserBookList::where('user_id', $user->id)->where('status', UserBookList::STATUS_FINISHED)->count();
+            $entry->update(['status' => $validated['status']]);
+            $newFinishedCount = UserBookList::where('user_id', $user->id)
+           ->where('status', UserBookList::STATUS_FINISHED)
+           ->count();
 
-        $entry->update(['status' => $validated['status']]);
-
+     $oldNickname = app(UsersController::class)->getReaderTitle($oldfinishedcount);
+     $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount);
+     if ($oldNickname !== $newNickname) {
+        $user->nickname = $newNickname;
+        $user->save();
+        $user->notify(new ReaderLevelUp($newNickname));
+     }
         return response()->json([
             'success' => true,
             'message' => 'تم تحديث حالة الكتاب بنجاح',
             'data' => $entry->load('book'),
         ], 200);
     }
+    
 //-------------------------------------------------------------------------------------------------------------------
 //حذف كتاب من قوائم المستخدم
     public function delete(Request $request, $bookId)
@@ -123,4 +135,5 @@ public function add(Request $request)
             'message' => 'تم حذف الكتاب من القائمة بنجاح',
         ], 200);
     }
+//----------------------------------------------------------------------------------------------------
 }

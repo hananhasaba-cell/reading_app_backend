@@ -35,11 +35,6 @@ public function suggestions(){
 public function favorites(){
         return $this->hasMany(Favorite::class);
     } 
- //-----------------------------------------------------------------     
-//تابع علاقة الكتاب بالتقدم للمستخدمين
-public function progress(){
-        return $this->hasMany(UserProgress::class);
-    }    
  //-----------------------------------------------------------------  
 //علاقة الكتاب بقوائم المستخدمين
 public function userBookLists()

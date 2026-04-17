@@ -44,11 +44,6 @@ public function favorites() {
     return $this->hasMany(Favorite::class);
 }
 //----------------------------------------------------------------------------
-// تابع علاقة المستخدم بأهداف القراءة
-public function progress(){
-    return $this->hasMany(UserProgress::class, 'user_id');
-}
-//----------------------------------------------------------------------------
 // علاقة قائمة الكتب الخاصة بالمستخدم
 public function bookList()
 {

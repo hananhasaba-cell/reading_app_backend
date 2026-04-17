@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Book;
+use App\Models\UserBookList;
 class AdminController extends Controller
 {
 
@@ -70,24 +71,25 @@ public function register(Request $request)
         ], 200);
     }
 //-----------------------------------------------------------------------------------------------
-//عرض جميع المستخدمين مع عدد النقاط المكتسبة ونسبة التقدم في الأهداف الأسبوعية
+//عرض جميع المستخدمين مع عدد الكتب المقروءة لكل مستخدم
 public function usersProgress(Request $request)
 {
-        if (! $request->user() instanceof Admin) {
+    if (!$request->user() instanceof Admin) {
         return response()->json([
             'success' => false,
             'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
         ], 403);
     }
-    $users = User::with('progress')->get()->map(function ($user) {
 
-        $user->points = $user->progress->sum('points_earned');
+    $users = User::withCount('finishedReading')->get()->map(function (User $user) {
+    $finishedCount = $user->finished_reading_count;
 
-        $user->progress_percentage = $user->progress->count()
-            ? $user->progress->avg('progress_percentage')
-            : 0;
-
-        return $user;
+   $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
+        return [
+            'name' => $user->name,
+            'nickname' => $nickname,
+            'books_read' => $user->finished_reading_count,
+        ];
     });
 
     return response()->json([
@@ -99,15 +101,31 @@ public function usersProgress(Request $request)
 // عرض جميع الكتب مع تقييماتها
 public function booksWithRatings(Request $request)
 {
-            if (!$request->user() instanceof Admin) {
+    if (!$request->user() instanceof Admin) {
         return response()->json([
             'success' => false,
             'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
         ], 403);
     }
+
     $books = Book::with('ratings')->get()->map(function ($book) {
+
         $book->average_rating = $book->ratings->avg('rating') ?? 0;
-        return $book;
+
+        return [
+            'title' => $book->title,
+            'author' => $book->author,
+            'pages' => $book->PageNumber,
+            'cover_img' => $book->cover_img,
+            'pdf' => $book->pdf_path,
+            'average_rating' => $book->average_rating,
+            'ratings' => $book->ratings->map(function ($rating) {
+                return [
+                    'user_id' => $rating->user_id,
+                    'rating' => $rating->rating,
+                ];
+            }),
+        ];
     });
 
     return response()->json([

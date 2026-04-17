@@ -10,6 +10,7 @@ use App\Models\Admin;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Carbon;
+use App\Notifications\SuggestionStatus;
 
 class SuggestionController extends Controller
 {
@@ -88,8 +89,13 @@ class SuggestionController extends Controller
 			'admin_id' => $admin->id,
 			'reviewed_at' => now(),
 		]);
-		// إرسال إيميل للمستخدم بأنه تم قبول اقتراحه
-		$this->sendSuggestionStatusMail($suggestion, true);
+//  إرسال إشعار
+          $suggestion->user->notify(
+          new SuggestionStatus(
+        'تم قبول اقتراحك، سنحاول توفير الكتاب قريباً',
+        'accepted'
+    )
+);
 		return response()->json([
 			'success' => true,
 			'message' => 'تم قبول الاقتراح ',
@@ -119,8 +125,18 @@ class SuggestionController extends Controller
 			'admin_id' => $admin->id,
 			'reviewed_at' => now(),
 		]);
-		// إرسال إيميل للمستخدم بأنه تم رفض اقتراحه
-		$this->sendSuggestionStatusMail($suggestion, false);
+		$$suggestion->update([
+    'status' => Suggestion::STATUS_ACCEPTED,
+    'admin_id' => $admin->id,
+    'reviewed_at' => now(),
+]);
+//  إرسال إشعار
+		  $suggestion->user->notify(
+		  new SuggestionStatus(
+		'نعتذر تم رفض هذا الاقتراح بسبب مشكلة معينة أو وجود هذا الكتاب بالفعل',
+		'rejected'
+	));
+
 		return response()->json([
 			'success' => true,
 			'message' => 'تم رفض الاقتراح',

@@ -106,16 +106,7 @@ class UsersController extends Controller
     }
 
     return response()->json([
-        'success' => true,
-        'data' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'nickname' => $user->nickname,
-            'email' => $user->email,
-            'total_points' => $user->total_points,
-            'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
-
-            // إحصائيات القوائم
+                    // إحصائيات القوائم
             'stats' => [
                 'want_to_read_count' => $user->bookList()
                     ->where('status', UserBookList::STATUS_WANT_TO_READ)
@@ -128,7 +119,19 @@ class UsersController extends Controller
                 'finished_count' => $user->bookList()
                     ->where('status', UserBookList::STATUS_FINISHED)
                     ->count(),
+                    $nickname = $user->nickname ?: $this->getReaderTitle($user->bookList()->where('status', UserBookList::STATUS_FINISHED)->count())
             ],
+            
+        'success' => true,
+        'data' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'nickname' => $nickname,
+            'email' => $user->email,
+            'total_points' => $user->total_points,
+            'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
+
+
         ],
     ], 200);
 }
@@ -340,9 +343,48 @@ public function getFollowers(Request $request)
         ],
     ], 200);
 }
-
-
-
-
 //----------------------------------------------------------------------------------------------
+// تابع لتحديد اللقب
+public function getReaderTitle($count)
+{
+    if ($count >= 200) return 'القارئ اللانهائي';
+    if ($count >= 150) return 'أسطورة القراءة';
+    if ($count >= 100) return 'شعلة القراءة';
+    if ($count >= 60) return 'دودة الكتب';
+    if ($count >= 40) return 'قارئ نهم';
+    if ($count >= 20) return 'قارئ نشيط';
+    if ($count >= 10) return 'قارئ منتظم';
+
+    return 'قارئ مبتدئ';
+}
+//--------------------------------------------------------------------------------------
+//عرض إشعارات المستخدم
+public function userNotifications(Request $request)
+{
+    $user = $request->user();
+
+    $notifications = $user->notifications()
+        ->latest()
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $notifications,
+    ]);
+}
+//تحديد كل الإشعارات كمقروءة
+public function markAsRead(Request $request, $id)
+{
+    $notification = $request->user()
+        ->notifications()
+        ->where('id', $id)
+        ->firstOrFail();
+
+    $notification->markAsRead();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'تم تحديد الإشعار كمقروء'
+    ]);
+}
 }
