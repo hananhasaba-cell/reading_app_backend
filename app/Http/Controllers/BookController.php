@@ -86,7 +86,7 @@ class BookController extends Controller
             'gener' => 'required|array',
             'gener.*' => 'string|max:255',
             'description' => 'nullable|string',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cover_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'pdf_path' => 'nullable|file|mimes:pdf|max:40000',
         ]);
 
@@ -111,15 +111,13 @@ class BookController extends Controller
 
         // رفع الصورة
         $coverPath = null;
-        if ($request->hasFile('cover_image')) {
-            $coverPath = $request->file('cover_image')->store('books/images', 'public');
+        if ($request->hasFile('cover_img')) {
+            $coverPath = $request->file('cover_img')->store('books/images', 'public');
         }
 
         // رفع PDF
-        $pdfPath = null;
-        if ($request->hasFile('pdf_path')) {
-            $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
-        }
+        $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+
 
         // إنشاء الكتاب
         $book = Book::create([
@@ -127,7 +125,7 @@ class BookController extends Controller
             'author' => $validatedData['author'],
             'PageNumber' => $validatedData['PageNumber'],
             'description' => $validatedData['description'] ?? null,
-            'cover_image' => $coverPath,
+            'cover_img' => $coverPath,
             'pdf_path' => $pdfPath,
         ]);
 
@@ -172,23 +170,21 @@ class BookController extends Controller
             'gener' => 'sometimes|required|array',
             'gener.*' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cover_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'pdf_path' => 'nullable|file|mimes:pdf|max:40000',
         ]);
         // رفع الصورة
         $coverPath = null;
-        if ($request->hasFile('cover_image')) {
-            $coverPath = $request->file('cover_image')->store('books/images', 'public');
+        if ($request->hasFile('cover_img')) {
+            $coverPath = $request->file('cover_img')->store('books/images', 'public');
         }
 
         // رفع pdf
-        $pdfPath = null;
-        if ($request->hasFile('pdf_path')) {
-            $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
-        }
+        $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+
         // تحديث بيانات الكتاب
         $book->update(array_merge($validatedData, [
-            'cover_image' => $coverPath,
+            'cover_img' => $coverPath,
             'pdf_path' => $pdfPath,
         ]));
 

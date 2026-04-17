@@ -117,11 +117,11 @@ class AdminController extends Controller
                 'title' => $book->title,
                 'author' => $book->author,
                 'pages' => $book->PageNumber,
-                'cover_img' => $book->cover_image
-                    ? asset('storage/' . $book->cover_image)
+                'cover_img' => $book->cover_img
+                    ? asset('storage/' . $book->cover_img)
                     : null,
 
-                'pdf' => $book->pdf_path
+                'pdf_path' => $book->pdf_path
                     ? asset('storage/' . $book->pdf_path)
                     : null,
 
