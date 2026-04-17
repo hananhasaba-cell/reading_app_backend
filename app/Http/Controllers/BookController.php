@@ -12,30 +12,113 @@ class BookController extends Controller
     //عرض جميع الكتب
     public function index()
     {
-        $books = Book::all();
+        // تحميل التقييمات + التصنيفات
+        $books = Book::with(['ratings', 'geners'])->get()->map(function ($book) {
+
+            $book->average_rating = $book->ratings->avg('rating') ?? 0;
+
+            return [
+                'id' => $book->id,
+                'title' => $book->title,
+                'author' => $book->author,
+                'pages' => $book->PageNumber,
+
+                // رابط الصورة
+                'cover_img' => $book->cover_img
+                    ? asset('storage/' . $book->cover_img)
+                    : null,
+
+                // رابط PDF
+                'pdf_path' => $book->pdf_path
+                    ? asset('storage/' . $book->pdf_path)
+                    : null,
+
+                // متوسط التقييم
+                'average_rating' => $book->average_rating,
+
+                // التصنيفات
+                'geners' => $book->geners->map(function ($gener) {
+                    return [
+                        'id' => $gener->id,
+                        'name' => $gener->name,
+                    ];
+                }),
+
+                // التقييمات
+                'ratings' => $book->ratings->map(function ($rating) {
+                    return [
+                        'user_id' => $rating->user_id,
+                        'rating' => $rating->rating,
+                    ];
+                }),
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'message' => "تم جلب الكتب بنجاح",
             'data' => $books
         ], 200);
     }
+
     //----------------------------------------------------------------------------------
 //عرض تفاصيل الكتاب
     public function show($id)
     {
-        $book = Book::find($id);
+        $book = Book::with(['ratings', 'geners'])->find($id);
+
         if (!$book) {
             return response()->json([
                 'success' => false,
                 'message' => "الكتاب غير موجود"
             ], 404);
         }
+
+        // حساب متوسط التقييم
+        $averageRating = $book->ratings->avg('rating') ?? 0;
+
         return response()->json([
             'success' => true,
             'message' => "تم جلب تفاصيل الكتاب بنجاح",
-            'data' => $book
+            'data' => [
+                'id' => $book->id,
+                'title' => $book->title,
+                'author' => $book->author,
+                'pages' => $book->PageNumber,
+                'description' => $book->description,
+
+                // رابط الصورة
+                'cover_img' => $book->cover_img
+                    ? asset('storage/' . $book->cover_img)
+                    : null,
+
+                // رابط PDF
+                'pdf_path' => $book->pdf_path
+                    ? asset('storage/' . $book->pdf_path)
+                    : null,
+
+                // متوسط التقييم
+                'average_rating' => $averageRating,
+
+                // التصنيفات
+                'geners' => $book->geners->map(function ($gener) {
+                    return [
+                        'id' => $gener->id,
+                        'name' => $gener->name,
+                    ];
+                }),
+
+                // التقييمات
+                'ratings' => $book->ratings->map(function ($rating) {
+                    return [
+                        'user_id' => $rating->user_id,
+                        'rating' => $rating->rating,
+                    ];
+                }),
+            ]
         ], 200);
     }
+
     //----------------------------------------------------------------------------------    
 // البحث عن كتاب حسب الاسم، الكاتب، والتصنيف
     public function search(Request $request)
@@ -116,7 +199,10 @@ class BookController extends Controller
         }
 
         // رفع PDF
-        $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+        $pdfPath = null;
+        if ($request->hasFile('pdf_path')) {
+            $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+        }
 
 
         // إنشاء الكتاب
@@ -180,7 +266,10 @@ class BookController extends Controller
         }
 
         // رفع pdf
-        $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+        $pdfPath = null;
+        if ($request->hasFile('pdf_path')) {
+            $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+        }
 
         // تحديث بيانات الكتاب
         $book->update(array_merge($validatedData, [
