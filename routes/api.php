@@ -122,7 +122,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //تعديل كتاب (للمدير فقط)
     Route::put('/books/{id}', [BookController::class, 'update']);
     //حذف كتاب (للمدير فقط)
-    Route::delete('/books/{id}', [BookController::class, 'delete']);
+    Route::delete('/admin/books/{id}', [BookController::class, 'delete']);
     //عرض جميع المستخدمين مع عدد النقاط المكتسبة ونسبة التقدم في الأهداف الأسبوعية
     Route::get('/admin/users-progress', [AdminController::class, 'usersProgress']);
     // عرض جميع الكتب مع تقييماتها

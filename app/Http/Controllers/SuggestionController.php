@@ -38,7 +38,7 @@ class SuggestionController extends Controller
 			'data' => $suggestion,
 		], 201);
 	}
-//-----------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------
 //عرض اقتراحات المستخدم الحالي
 	public function mySuggestions(Request $request)
 	{
@@ -49,32 +49,32 @@ class SuggestionController extends Controller
 			'data' => $suggestions,
 		], 200);
 	}
-//--------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------
 //عرض قائمة جميع الاقتراحات عند المدير
 	public function index(Request $request)
 	{
 		if (!$request->user() instanceof Admin) {
-    return response()->json([
-        'success' => false,
-        'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
-    ], 403);
-}
+			return response()->json([
+				'success' => false,
+				'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
+			], 403);
+		}
 		$suggestions = Suggestion::with(['user', 'relatedBook'])->orderBy('created_at', 'desc')->get();
 		return response()->json([
 			'success' => true,
 			'data' => $suggestions,
 		], 200);
 	}
-//-----------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------
 //موافقة المدير على اقتراح الكتاب
 	public function accept(Request $request, $id)
 	{
 		if (!$request->user() instanceof Admin) {
-    return response()->json([
-        'success' => false,
-        'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
-    ], 403);
-}
+			return response()->json([
+				'success' => false,
+				'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
+			], 403);
+		}
 		$admin = $request->user();
 		$suggestion = Suggestion::findOrFail($id);
 		if ($suggestion->status !== Suggestion::STATUS_PENDING) {
@@ -89,53 +89,54 @@ class SuggestionController extends Controller
 			'admin_id' => $admin->id,
 			'reviewed_at' => now(),
 		]);
-//  إرسال إشعار
-          $suggestion->user->notify(
-          new SuggestionStatus(
-        'تم قبول اقتراحك، سنحاول توفير الكتاب قريباً',
-        'accepted'
-    )
-);
+		//  إرسال إشعار
+		$suggestion->user->notify(
+			new SuggestionStatus(
+				'تم قبول اقتراحك، سنحاول توفير الكتاب قريباً',
+				'accepted'
+			)
+		);
 		return response()->json([
 			'success' => true,
 			'message' => 'تم قبول الاقتراح ',
 			'data' => $suggestion->load('book'),
 		], 200);
 	}
-//---------------------------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------------------------
 	//رفض المدير للاقتراح
 	public function reject(Request $request, $id)
 	{
 		if (!$request->user() instanceof Admin) {
-    return response()->json([
-        'success' => false,
-        'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
-    ], 403);
-}
+			return response()->json([
+				'success' => false,
+				'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
+			], 403);
+		}
+
 		$admin = $request->user();
 		$suggestion = Suggestion::findOrFail($id);
+
 		if ($suggestion->status !== Suggestion::STATUS_PENDING) {
 			return response()->json([
 				'success' => false,
 				'message' => 'تمت مراجعة هذا الاقتراح بالفعل',
 			], 400);
 		}
+
+		// رفض الاقتراح
 		$suggestion->update([
 			'status' => Suggestion::STATUS_REJECTED,
 			'admin_id' => $admin->id,
 			'reviewed_at' => now(),
 		]);
-		$$suggestion->update([
-    'status' => Suggestion::STATUS_ACCEPTED,
-    'admin_id' => $admin->id,
-    'reviewed_at' => now(),
-]);
-//  إرسال إشعار
-		  $suggestion->user->notify(
-		  new SuggestionStatus(
-		'نعتذر تم رفض هذا الاقتراح بسبب مشكلة معينة أو وجود هذا الكتاب بالفعل',
-		'rejected'
-	));
+
+		// إرسال إشعار
+		$suggestion->user->notify(
+			new SuggestionStatus(
+				'نعتذر تم رفض هذا الاقتراح بسبب مشكلة معينة أو وجود هذا الكتاب بالفعل',
+				'rejected'
+			)
+		);
 
 		return response()->json([
 			'success' => true,
@@ -143,7 +144,8 @@ class SuggestionController extends Controller
 			'data' => $suggestion,
 		], 200);
 	}
-//-----------------------------------------------------------------------------------------------------------
+
+	//-----------------------------------------------------------------------------------------------------------
 //عرض الكتب المشابهة للكتاب المقترح
 	public function bookSuggestions($bookId)
 	{
@@ -153,14 +155,5 @@ class SuggestionController extends Controller
 			'data' => $suggestions,
 		], 200);
 	}
-//--------------------------------------------------------------------------------------------------------------
-	//إرسال إيميل للمستخدم
-	protected function sendSuggestionStatusMail(Suggestion $suggestion, $accepted)
-	{
-		$user = $suggestion->user;
-		$status = $accepted ? 'تم قبول الاقتراح، سنحاول توفير الكتاب بأقرب وقت' : 'نعتذر تم رفض هذا الاقتراح بسبب مشكلة معينة أو وجود هذا الكتاب بالفعل';
-		Mail::to($user->email)->send(
-			new \App\Mail\SuggestionStatusMail($user, $suggestion, $status, $accepted)
-		);
-	}
+	//--------------------------------------------------------------------------------------------------------------
 }

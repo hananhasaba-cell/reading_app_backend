@@ -114,15 +114,18 @@ class AdminController extends Controller
             $book->average_rating = $book->ratings->avg('rating') ?? 0;
 
             return [
+                'id' => $book->id,
                 'title' => $book->title,
                 'author' => $book->author,
                 'pages' => $book->PageNumber,
+                // رابط الصورة
                 'cover_img' => $book->cover_img
-                    ? asset('storage/' . $book->cover_img)
+                    ? url('books/images/' . basename($book->cover_img))
                     : null,
 
-                'pdf_path' => $book->pdf_path
-                    ? asset('storage/' . $book->pdf_path)
+                //   PDF
+                'pdf' => $book->pdf_path
+                    ? url('books/pdfs/' . str_replace(['public/', 'storage/', 'books/pdfs/'], '', $book->pdf_path))
                     : null,
 
                 'average_rating' => $book->average_rating,

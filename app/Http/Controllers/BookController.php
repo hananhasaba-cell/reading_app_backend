@@ -191,20 +191,28 @@ class BookController extends Controller
             $gener = Gener::firstOrCreate(['name' => $generName]);
             $generIds[] = $gener->id;
         }
-
         // رفع الصورة
         $coverPath = null;
         if ($request->hasFile('cover_img')) {
-            $coverPath = $request->file('cover_img')->store('books/images', 'public');
+            $file = $request->file('cover_img');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            // الرفع لمجلد public
+            $file->move(public_path('books/images'), $fileName);
+            $coverPath = $fileName;
         }
 
         // رفع PDF
         $pdfPath = null;
         if ($request->hasFile('pdf_path')) {
-            $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+            $file = $request->file('pdf_path');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+
+            // الرفع لمجلد public
+            $file->move(public_path('books/pdfs'), $fileName);
+
+            // نخزن فقط اسم الملف في المتغير ليحفظ في قاعدة البيانات
+            $pdfPath = $fileName;
         }
-
-
         // إنشاء الكتاب
         $book = Book::create([
             'title' => $validatedData['title'],
@@ -259,23 +267,35 @@ class BookController extends Controller
             'cover_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'pdf_path' => 'nullable|file|mimes:pdf|max:40000',
         ]);
-        // رفع الصورة
-        $coverPath = null;
+        // رفع الصورة لمجلد public
         if ($request->hasFile('cover_img')) {
-            $coverPath = $request->file('cover_img')->store('books/images', 'public');
+            $file = $request->file('cover_img');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('books/images'), $fileName);
+            $book->cover_img = $fileName;
         }
 
-        // رفع pdf
-        $pdfPath = null;
+        // رفع الـ PDF لمجلد public
         if ($request->hasFile('pdf_path')) {
-            $pdfPath = $request->file('pdf_path')->store('books/pdfs', 'public');
+            $file = $request->file('pdf_path');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('books/pdfs'), $fileName);
+            $book->pdf_path = $fileName;
         }
 
         // تحديث بيانات الكتاب
-        $book->update(array_merge($validatedData, [
-            'cover_img' => $coverPath,
-            'pdf_path' => $pdfPath,
-        ]));
+        $book->update($request->except(['cover_img', 'pdf_path']));
+        $book->save();
+
+        // تحديث التصنيفات إذا تم إرسالها
+        if ($request->has('gener')) {
+            $generIds = [];
+            foreach ($validatedData['gener'] as $generName) {
+                $gener = Gener::firstOrCreate(['name' => $generName]);
+                $generIds[] = $gener->id;
+            }
+            $book->geners()->sync($generIds);
+        }
 
         return response()->json([
             'success' => true,
