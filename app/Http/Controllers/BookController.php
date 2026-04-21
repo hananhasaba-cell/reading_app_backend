@@ -23,14 +23,12 @@ class BookController extends Controller
                 'author' => $book->author,
                 'pages' => $book->PageNumber,
 
-                // رابط الصورة
                 'cover_img' => $book->cover_img
-                    ? asset('storage/' . $book->cover_img)
+                    ? asset('books/images/' . $book->cover_img)
                     : null,
 
-                // رابط PDF
                 'pdf_path' => $book->pdf_path
-                    ? asset('storage/' . $book->pdf_path)
+                    ? asset('books/pdfs/' . $book->pdf_path)
                     : null,
 
                 // متوسط التقييم
@@ -87,14 +85,14 @@ class BookController extends Controller
                 'pages' => $book->PageNumber,
                 'description' => $book->description,
 
-                // رابط الصورة
+                // رابط الصورة 
                 'cover_img' => $book->cover_img
-                    ? asset('storage/' . $book->cover_img)
+                    ? asset('books/images/' . $book->cover_img)
                     : null,
 
-                // رابط PDF
+                // رابط PDF 
                 'pdf_path' => $book->pdf_path
-                    ? asset('storage/' . $book->pdf_path)
+                    ? asset('books/pdfs/' . $book->pdf_path)
                     : null,
 
                 // متوسط التقييم
@@ -260,7 +258,7 @@ class BookController extends Controller
         $validatedData = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'author' => 'sometimes|required|string|max:255',
-            'PageNumber' => 'sometimes|required|integer',
+            'PageNumber' => 'sometimes|nullable|integer',
             'gener' => 'sometimes|required|array',
             'gener.*' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
