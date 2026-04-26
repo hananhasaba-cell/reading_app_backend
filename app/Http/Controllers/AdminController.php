@@ -81,7 +81,7 @@ class AdminController extends Controller
             ], 403);
         }
 
-        $users = User::withCount('finishedReading')->get()->map(function (User $user) {
+        $users = User::withCount('finishedReading')->orderBy('finished_reading_count', 'desc')->get()->map(function (User $user) {
             $finishedCount = $user->finished_reading_count;
 
             $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
