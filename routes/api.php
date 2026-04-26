@@ -69,14 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/suggestions/{id}/reject', [SuggestionController::class, 'reject']);
     //عرض قائمة الكتب المقترحة لكتاب معين
     Route::get('/books/{bookId}/suggestions', [SuggestionController::class, 'bookSuggestions']);
-    //----------------------------------------------------------------------------------------------
-//الكتب
-//البحث عن كتاب
-    Route::get('/books/search', [BookController::class, 'search']);
-    //عرض جميع الكتب
-    Route::get('/books', [BookController::class, 'index']);
-    //عرض تفاصيل كتاب معين
-    Route::get('/books/{id}', [BookController::class, 'show']);
     //----------------------------------------------------------------------------------------------------------
 //المسارات الخاصة بالتعليقات
 //إضافة تعليق جديد
@@ -100,8 +92,6 @@ Route::middleware('auth:sanctum')->group(function () {
     //عرض تقييم المستخدم لكتاب معين
     Route::get('/ratings/{bookId}', [RatingController::class, 'show']);
     //----------------------------------------------------------------------------------------------------------
-
-    //----------------------------------------------------------------------------------------------------------
 //المسارات الخاصة بالمدير
 //إضافة كتاب جديد (للمدير فقط)
     Route::post('/books', [BookController::class, 'add']);
@@ -115,8 +105,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/books-with-ratings', [AdminController::class, 'booksWithRatings']);
 });
 //----------------------------------------------------------------------------------------------------------
+//الكتب
+//البحث عن كتاب
+Route::get('/books/search', [BookController::class, 'search']);
+//عرض جميع الكتب
+Route::get('/books', [BookController::class, 'index']);
+//عرض تفاصيل كتاب معين
+Route::get('/books/{id}', [BookController::class, 'show']);
+//----------------------------------------------------------------------------------------------------------
 //تسجيل دخول المدير
 Route::post('/admin/login', [AdminController::class, 'login']);
 //إنشاء حساب للمدير
 Route::middleware('auth:sanctum')->post('/admin/register', [AdminController::class, 'register']);
-
