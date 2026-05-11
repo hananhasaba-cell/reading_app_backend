@@ -276,18 +276,6 @@ class UsersController extends Controller
 //عرض معلومات المستخدم الذي تتم متابعته
     public function getFollowedUser(Request $request, $followedUserId)
     {
-        $user = $request->user();
-
-        //  هل المستخدم الحالي يتابع هذا الشخص؟
-        $followedUser = $user->following()->where('followed_id', $followedUserId)->first();
-
-        if (!$followedUser) {
-            return response()->json([
-                'success' => false,
-                'message' => 'أنت لا تتابع هذا المستخدم.',
-            ], 404);
-        }
-
         // جلب بيانات المستخدم الذي تتم متابعته
         $targetUser = User::findOrFail($followedUserId);
 
