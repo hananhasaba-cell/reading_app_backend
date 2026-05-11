@@ -394,4 +394,24 @@ class UsersController extends Controller
             'message' => 'تم تحديد الإشعار كمقروء'
         ]);
     }
+    //-----------------------------------------------------------------------------------------------
+//عرض جميع المستخدمين مع عدد الكتب المقروءة لكل مستخدم
+    public function usersProgress(Request $request)
+    {
+        $users = User::withCount('finishedReading')->orderBy('finished_reading_count', 'desc')->get()->map(function (User $user) {
+            $finishedCount = $user->finished_reading_count;
+
+            $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
+            return [
+                'name' => $user->name,
+                'nickname' => $nickname,
+                'books_read' => $user->finished_reading_count,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $users,
+        ], 200);
+    }
 }
