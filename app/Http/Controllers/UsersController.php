@@ -274,37 +274,32 @@ class UsersController extends Controller
     }
     //---------------------------------------------------------------------------------------------
 //عرض معلومات المستخدم الذي تتم متابعته
-    public function getFollowedUser(Request $request, $followedUserId)
+    public function getFollowedUser($id)
     {
-        // جلب بيانات المستخدم  
-        $user = $request->user();
+        $user = User::find($id);
 
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'المستخدم غير موجود'
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
             'data' => [
-                'user_id' => $user->id,
+                'id' => $user->id,
                 'name' => $user->name,
                 'nickname' => $user->nickname,
-                'total_points' => $user->total_points,
                 'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
-
-                // إحصائيات القراءة
                 'stats' => [
-                    'want_to_read_count' => $user->bookList()
-                        ->where('status', UserBookList::STATUS_WANT_TO_READ)
-                        ->count(),
-
-                    'reading_now_count' => $user->bookList()
-                        ->where('status', UserBookList::STATUS_READING)
-                        ->count(),
-
-                    'finished_count' => $user->bookList()
-                        ->where('status', UserBookList::STATUS_FINISHED)
-                        ->count(),
-                ],
-            ],
-        ], 200);
+                    // إحصائيات القراءة
+                    'want_to_read_count' => $user->bookList()->where('status', 1)->count(),
+                    'reading_now_count' => $user->bookList()->where('status', 2)->count(),
+                    'finished_count' => $user->bookList()->where('status', 3)->count(),
+                ]
+            ]
+        ]);
     }
     //---------------------------------------------------------------------------------------------
 // عرض قائمة المتابعين
@@ -387,20 +382,26 @@ class UsersController extends Controller
 //عرض جميع المستخدمين مع عدد الكتب المقروءة لكل مستخدم
     public function usersProgress(Request $request)
     {
-        $users = User::withCount('finishedReading')->orderBy('finished_reading_count', 'desc')->get()->map(function (User $user) {
-            $finishedCount = $user->finished_reading_count;
+        $users = User::withCount('finishedReading')
+            ->orderBy('finished_reading_count', 'desc')
+            ->get()
+            ->map(function (User $user) {
 
-            $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
-            return [
-                'name' => $user->name,
-                'nickname' => $nickname,
-                'books_read' => $user->finished_reading_count,
-            ];
-        });
+                $finishedCount = $user->finished_reading_count;
+                $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'nickname' => $nickname,
+                    'books_read' => $user->finished_reading_count,
+                ];
+            });
 
         return response()->json([
             'success' => true,
             'data' => $users,
         ], 200);
     }
+
 }
