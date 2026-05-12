@@ -38,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //تحديد كل الإشعارات كمقروءة
     Route::post('/all_read', [UsersController::class, 'markAsRead']);
     //عرض قائمة المستخدمين حسب التقدم واللقب
-    Route::post('/users_pogress_list', [UsersController::class, 'usersProgress']);
+    Route::get('/users_pogress_list', [UsersController::class, 'usersProgress']);
     //-----------------------------------------------------------------------------------------------------
 // قوائم الكتب الشخصية
 //عرض الكتب

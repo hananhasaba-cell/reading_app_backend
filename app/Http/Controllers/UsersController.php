@@ -276,29 +276,30 @@ class UsersController extends Controller
 //عرض معلومات المستخدم الذي تتم متابعته
     public function getFollowedUser(Request $request, $followedUserId)
     {
-        // جلب بيانات المستخدم الذي تتم متابعته
-        $targetUser = User::findOrFail($followedUserId);
+        // جلب بيانات المستخدم  
+        $user = $request->user();
+
 
         return response()->json([
             'success' => true,
             'data' => [
-                'user_id' => $targetUser->id,
-                'name' => $targetUser->name,
-                'nickname' => $targetUser->nickname,
-                'total_points' => $targetUser->total_points,
-                'profile_img' => $targetUser->profile_img ? asset('storage/' . $targetUser->profile_img) : null,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'nickname' => $user->nickname,
+                'total_points' => $user->total_points,
+                'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
 
                 // إحصائيات القراءة
                 'stats' => [
-                    'want_to_read_count' => $targetUser->bookList()
+                    'want_to_read_count' => $user->bookList()
                         ->where('status', UserBookList::STATUS_WANT_TO_READ)
                         ->count(),
 
-                    'reading_now_count' => $targetUser->bookList()
+                    'reading_now_count' => $user->bookList()
                         ->where('status', UserBookList::STATUS_READING)
                         ->count(),
 
-                    'finished_count' => $targetUser->bookList()
+                    'finished_count' => $user->bookList()
                         ->where('status', UserBookList::STATUS_FINISHED)
                         ->count(),
                 ],
