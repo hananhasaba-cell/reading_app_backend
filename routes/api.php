@@ -29,8 +29,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/follow/{userId}', [UsersController::class, 'follow']);
     // إلغاء متابعة مستخدم
     Route::delete('/unfollow/{userId}', [UsersController::class, 'unfollow']);
-    // عرض بيانات الذين أتابعهم
-    Route::get('/followed_users/{followedUserId}', [UsersController::class, 'getFollowedUser']);
     // عرض المتابعين
     Route::get('/followers', [UsersController::class, 'getFollowers']);
     //عرض إشعارات المستخدم
@@ -114,6 +112,9 @@ Route::get('/books/search', [BookController::class, 'search']);
 Route::get('/books', [BookController::class, 'index']);
 //عرض تفاصيل كتاب معين
 Route::get('/books/{id}', [BookController::class, 'show']);
+//--------------
+// عرض بيانات الذين أتابعهم
+Route::get('/followed_users/{followedUserId}', [UsersController::class, 'getFollowedUser']);
 //----------------------------------------------------------------------------------------------------------
 //تسجيل دخول المدير
 Route::post('/admin/login', [AdminController::class, 'login']);
