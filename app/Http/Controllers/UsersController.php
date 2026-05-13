@@ -255,7 +255,6 @@ class UsersController extends Controller
             'is_following' => true
         ], 200);
     }
-
     //---------------------------------------------------------------------------------------------
 //إلغاء متابعة
     public function unfollow(Request $request, $userId)
@@ -292,7 +291,9 @@ class UsersController extends Controller
             ], 404);
         }
 
-        // حساب اللقب تلقائياً إذا لم يكن موجود
+        $currentUser = auth()->user();
+        $isFollowing = $currentUser->following()->where('followed_id', $id)->exists();
+
         $finishedCount = $user->bookList()
             ->where('status', UserBookList::STATUS_FINISHED)
             ->count();
@@ -311,7 +312,9 @@ class UsersController extends Controller
                     'want_to_read_count' => $user->bookList()->where('status', 1)->count(),
                     'reading_now_count' => $user->bookList()->where('status', 2)->count(),
                     'finished_count' => $finishedCount,
-                ]
+                ],
+
+                'is_following' => $isFollowing
             ]
         ]);
     }
