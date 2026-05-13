@@ -31,6 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/unfollow/{userId}', [UsersController::class, 'unfollow']);
     // عرض المتابعين
     Route::get('/followers', [UsersController::class, 'getFollowers']);
+    //عرض الذين أتابعهم
+    Route::get('/following', [UsersController::class, 'getFollowing']);
     //عرض إشعارات المستخدم
     Route::get('/notifications', [UsersController::class, 'userNotifications']);
     //تحديد كل الإشعارات كمقروءة

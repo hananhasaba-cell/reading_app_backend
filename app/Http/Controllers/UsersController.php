@@ -309,7 +309,7 @@ class UsersController extends Controller
         ]);
     }
     //---------------------------------------------------------------------------------------------
-// عرض قائمة المتابعين
+// عرض قائمة الذين يتابعونني
     public function getFollowers(Request $request)
     {
         $user = $request->user();
@@ -334,6 +334,34 @@ class UsersController extends Controller
             ],
         ], 200);
     }
+    //-----------------------------------------------------------------------------------------------
+    // عرض قائمة الذين أتابعهم  
+    public function getFollowing(Request $request)
+    {
+        $user = $request->user();
+
+        // جلب المستخدمين الذين يقوم المستخدم الحالي بمتابعتهم
+        $following = $user->following()->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'following' => $following->map(function ($followed) {
+                    return [
+                        'id' => $followed->id,
+                        'name' => $followed->name,
+                        'nickname' => $followed->nickname,
+                        'total_points' => $followed->total_points,
+                        'email' => $followed->email,
+                        'profile_img' => $followed->profile_img
+                            ? asset('storage/' . $followed->profile_img)
+                            : null,
+                    ];
+                }),
+            ],
+        ], 200);
+    }
+
     //----------------------------------------------------------------------------------------------
 // تابع لتحديد اللقب
     public function getReaderTitle($count)
