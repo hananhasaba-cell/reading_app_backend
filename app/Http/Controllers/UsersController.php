@@ -235,6 +235,7 @@ class UsersController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'لا يمكنك متابعة نفسك',
+                'is_following' => false
             ], 400);
         }
 
@@ -242,6 +243,7 @@ class UsersController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'أنت تتابع هذا المستخدم بالفعل',
+                'is_following' => true
             ], 400);
         }
 
@@ -250,8 +252,10 @@ class UsersController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم متابعة المستخدم بنجاح',
+            'is_following' => true
         ], 200);
     }
+
     //---------------------------------------------------------------------------------------------
 //إلغاء متابعة
     public function unfollow(Request $request, $userId)
@@ -262,6 +266,7 @@ class UsersController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'أنت لا تتابع هذا المستخدم',
+                'is_following' => false
             ], 400);
         }
 
@@ -270,8 +275,10 @@ class UsersController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم إلغاء متابعة المستخدم بنجاح',
+            'is_following' => false
         ], 200);
     }
+
     //---------------------------------------------------------------------------------------------
 //عرض معلومات المستخدم الذي تتم متابعته
     public function getFollowedUser($id)
