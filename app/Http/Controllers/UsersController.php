@@ -395,6 +395,7 @@ class UsersController extends Controller
                     'name' => $user->name,
                     'nickname' => $nickname,
                     'books_read' => $user->finished_reading_count,
+                    'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
                 ];
             });
 
