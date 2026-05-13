@@ -285,18 +285,25 @@ class UsersController extends Controller
             ], 404);
         }
 
+        // حساب اللقب تلقائياً إذا لم يكن موجود
+        $finishedCount = $user->bookList()
+            ->where('status', UserBookList::STATUS_FINISHED)
+            ->count();
+
+        $nickname = $user->nickname ?: $this->getReaderTitle($finishedCount);
+
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'nickname' => $user->nickname,
+                'nickname' => $nickname,
                 'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
+
                 'stats' => [
-                    // إحصائيات القراءة
                     'want_to_read_count' => $user->bookList()->where('status', 1)->count(),
                     'reading_now_count' => $user->bookList()->where('status', 2)->count(),
-                    'finished_count' => $user->bookList()->where('status', 3)->count(),
+                    'finished_count' => $finishedCount,
                 ]
             ]
         ]);
