@@ -104,6 +104,7 @@ class UsersController extends Controller
                 'message' => "خطأ في تحديد المستخدم",
             ], 401);
         }
+        $nickname = $user->nickname ?: $this->getReaderTitle($user->bookList()->where('status', UserBookList::STATUS_FINISHED)->count());
 
         return response()->json([
             // إحصائيات القوائم
@@ -119,9 +120,7 @@ class UsersController extends Controller
                 'finished_count' => $user->bookList()
                     ->where('status', UserBookList::STATUS_FINISHED)
                     ->count(),
-                $nickname = $user->nickname ?: $this->getReaderTitle($user->bookList()->where('status', UserBookList::STATUS_FINISHED)->count())
             ],
-
             'success' => true,
             'data' => [
                 'id' => $user->id,
@@ -309,8 +308,8 @@ class UsersController extends Controller
                 'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
 
                 'stats' => [
-                    'want_to_read_count' => $user->bookList()->where('status', 1)->count(),
-                    'reading_now_count' => $user->bookList()->where('status', 2)->count(),
+                    'want_to_read_count' => $user->bookList()->where('status', UserBookList::STATUS_WANT_TO_READ)->count(),
+                    'reading_now_count' => $user->bookList()->where('status', UserBookList::STATUS_READING)->count(),
                     'finished_count' => $finishedCount,
                 ],
 
