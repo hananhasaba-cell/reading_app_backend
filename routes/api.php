@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/followers', [UsersController::class, 'getFollowers']);
     //عرض الذين أتابعهم
     Route::get('/following', [UsersController::class, 'getFollowing']);
+    // عرض بيانات الذين أتابعهم
+    Route::get('/followed_users/{followedUserId}', [UsersController::class, 'getFollowedUser']);
     //عرض إشعارات المستخدم
     Route::get('/notifications', [UsersController::class, 'userNotifications']);
     //تحديد كل الإشعارات كمقروءة
@@ -115,8 +117,7 @@ Route::get('/books', [BookController::class, 'index']);
 //عرض تفاصيل كتاب معين
 Route::get('/books/{id}', [BookController::class, 'show']);
 //--------------
-// عرض بيانات الذين أتابعهم
-Route::get('/followed_users/{followedUserId}', [UsersController::class, 'getFollowedUser']);
+
 //----------------------------------------------------------------------------------------------------------
 //تسجيل دخول المدير
 Route::post('/admin/login', [AdminController::class, 'login']);
