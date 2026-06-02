@@ -121,23 +121,17 @@ class BookController extends Controller
 // البحث عن كتاب حسب الاسم، الكاتب، والتصنيف
     public function search(Request $request)
     {
+        $search = $request->input('search');
+
         $query = Book::query();
 
-        $title = $request->input('title');
-        $author = $request->input('author');
-        $gener = $request->input('gener');
-
-        if (!empty($title)) {
-            $query->where('title', 'like', '%' . $title . '%');
-        }
-
-        if (!empty($author)) {
-            $query->where('author', 'like', '%' . $author . '%');
-        }
-
-        if (!empty($gener)) {
-            $query->whereHas('geners', function ($q) use ($gener) {
-                $q->where('name', 'like', '%' . $gener . '%');
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%$search%")
+                    ->orWhere('author', 'like', "%$search%")
+                    ->orWhereHas('geners', function ($genreQuery) use ($search) {
+                        $genreQuery->where('name', 'like', "%$search%");
+                    });
             });
         }
 
@@ -149,6 +143,7 @@ class BookController extends Controller
             'data' => $books
         ], 200);
     }
+
     //---------------------------------------------------------------------------------------------------
 //إضافة كتاب جديد فقط من عند المدير
     public function add(Request $request)
