@@ -22,14 +22,18 @@ class CommentController extends Controller
         ]);
         $comment->load('user:id,name,profile_img');
         $comment->load('book:id,title');
-        return response()->json([
-            'message' => 'تمت إضافة التعليق بنجاح', 
-            'comment' => $comment], 
-            201);
+        return response()->json(
+            [
+                'message' => 'تمت إضافة التعليق بنجاح',
+                'comment' => $comment
+            ],
+            201
+        );
     }
-//--------------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------------
     // الرد على تعليق
-    public function reply(Request $request, $commentId){
+    public function reply(Request $request, $commentId)
+    {
         $request->validate([
             'content' => 'required|string|max:1000',
         ]);
@@ -44,15 +48,19 @@ class CommentController extends Controller
         ]);
         $reply->load('user:id,name,profile_img');
         $reply->load('book:id,title');
-        return response()->json([
-            'message' => 'تمت إضافة الرد بنجاح', 
-            'reply' => $reply], 
-            201);
+        return response()->json(
+            [
+                'message' => 'تمت إضافة الرد بنجاح',
+                'reply' => $reply
+            ],
+            201
+        );
 
     }
-//--------------------------------------------------------------------------------------------------------------
-   //  حذف تعليق أو رد على تعليق
-    public function delete($commentId){
+    //--------------------------------------------------------------------------------------------------------------
+    //  حذف تعليق أو رد على تعليق
+    public function delete($commentId)
+    {
         $comment = Comment::findOrFail($commentId);
 
         // التأكد أن المستخدم هو صاحب التعليق أو الرد
@@ -64,10 +72,11 @@ class CommentController extends Controller
 
         return response()->json(['message' => 'تم حذف التعليق بنجاح']);
     }
-//--------------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------------
 //تعديل تعليق
 
-  public function update(Request $request, $commentId){
+    public function update(Request $request, $commentId)
+    {
         $request->validate([
             'content' => 'required|string|max:1000',
         ]);
@@ -84,25 +93,25 @@ class CommentController extends Controller
 
         return response()->json(['message' => 'تم تعديل التعليق بنجاح', 'comment' => $comment]);
     }
-//--------------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------------
 // عرض التعليقات والردود لكتاب معين
-public function index($bookId)
-{
-    $comments = Comment::where('book_id', $bookId)
-        ->whereNull('parent_id')
-        ->with([
-            'user:id,name,profile_img',
-            'replies.user:id,name,profile_img',
-            'replies.replies.user:id,name,profile_img' // لو يوجد ردود داخل ردود
-        ])
-        ->orderBy('created_at', 'desc')
-        ->get();
+    public function index($bookId)
+    {
+        $comments = Comment::where('book_id', $bookId)
+            ->whereNull('parent_id')
+            ->with([
+                'user:id,name,profile_img',
+                'replies.user:id,name,profile_img',
+                'replies.replies.user:id,name,profile_img' // لو يوجد ردود داخل ردود
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'comments' => $comments
-    ]);
-} 
-//--------------------------------------------------------------------------------------------------------------
-    
+        return response()->json([
+            'success' => true,
+            'comments' => $comments
+        ]);
+    }
+    //--------------------------------------------------------------------------------------------------------------
+
 }

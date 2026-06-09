@@ -121,18 +121,20 @@ class BookController extends Controller
 // البحث عن كتاب حسب الاسم، الكاتب، والتصنيف
     public function search(Request $request)
     {
-        $search = $request->input('search');
+        $search = trim($request->input('search'));
 
         $query = Book::query();
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%$search%")
-                    ->orWhere('author', 'like', "%$search%")
-                    ->orWhereHas('geners', function ($genreQuery) use ($search) {
-                        $genreQuery->where('name', 'like', "%$search%");
-                    });
-            });
+                // بحث يبدأ بالكلمة
+                $q->where('title', 'like', "$search%")
+                    ->orWhere('author', 'like', "$search%");
+            })
+                ->orWhereHas('geners', function ($genreQuery) use ($search) {
+                    // بحث دقيق في التصنيف
+                    $genreQuery->where('name', 'like', "$search%");
+                });
         }
 
         $books = $query->with('geners')->get();
