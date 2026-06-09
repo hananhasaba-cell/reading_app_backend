@@ -61,7 +61,6 @@ class BookController extends Controller
 
     //----------------------------------------------------------------------------------
 //عرض تفاصيل الكتاب
-    //عرض تفاصيل الكتاب
     public function show($id)
     {
         $book = Book::with(['ratings', 'geners'])->find($id);
