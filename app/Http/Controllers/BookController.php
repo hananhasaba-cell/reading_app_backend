@@ -61,6 +61,7 @@ class BookController extends Controller
 
     //----------------------------------------------------------------------------------
 //عرض تفاصيل الكتاب
+    //عرض تفاصيل الكتاب
     public function show($id)
     {
         $book = Book::with(['ratings', 'geners'])->find($id);
@@ -75,6 +76,27 @@ class BookController extends Controller
         // حساب متوسط التقييم
         $averageRating = $book->ratings->avg('rating') ?? 0;
 
+        // جلب الكتب المشابهة حسب التصنيفات
+        $genreIds = $book->geners->pluck('id');
+
+        $similarBooks = Book::whereHas('geners', function ($q) use ($genreIds) {
+            $q->whereIn('geners.id', $genreIds);
+        })
+            ->where('id', '!=', $book->id) // استبعاد الكتاب نفسه
+            ->with('geners')
+            ->take(10)
+            ->get()
+            ->map(function ($similar) {
+                return [
+                    'id' => $similar->id,
+                    'title' => $similar->title,
+                    'author' => $similar->author,
+                    'cover_img' => $similar->cover_img
+                        ? asset('books/images/' . $similar->cover_img)
+                        : null,
+                ];
+            });
+        //  return النهائي
         return response()->json([
             'success' => true,
             'message' => "تم جلب تفاصيل الكتاب بنجاح",
@@ -113,10 +135,11 @@ class BookController extends Controller
                         'rating' => $rating->rating,
                     ];
                 }),
+                // الكتب المشابهة
+                'similar_books' => $similarBooks,
             ]
         ], 200);
     }
-
     //----------------------------------------------------------------------------------    
 // البحث عن كتاب حسب الاسم، الكاتب، والتصنيف
     public function search(Request $request)
