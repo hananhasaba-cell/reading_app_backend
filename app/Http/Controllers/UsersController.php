@@ -19,6 +19,8 @@ class UsersController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'email' => ['required', 'string', 'unique:users,email'],
             'profile_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'nickname' => 'قارئ مبتدئ',
+
         ], [
             'password.confirmed' => 'كلمة المرور غير مطابقة',
             'email.unique' => 'البريد الإلكتروني مستخدم بالفعل',
