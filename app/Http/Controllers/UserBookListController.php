@@ -97,12 +97,14 @@ class UserBookListController extends Controller
             ->where('status', UserBookList::STATUS_FINISHED)
             ->count();
 
-        $oldNickname = app(UsersController::class)->getReaderTitle($oldfinishedcount);
-        $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount);
+        $oldNickname = $user->nickname; //  من قاعدة البيانات
+        $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount); //  لقب جديد 
+
         if ($oldNickname !== $newNickname) {
             $user->nickname = $newNickname;
             $user->save();
             $user->notify(new ReaderLevelUp($newNickname));
+
         }
         return response()->json([
             'success' => true,
