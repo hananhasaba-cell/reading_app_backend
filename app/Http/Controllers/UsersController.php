@@ -107,7 +107,7 @@ class UsersController extends Controller
                 'message' => "خطأ في تحديد المستخدم",
             ], 401);
         }
-        $nickname = $user->nickname ?: $this->getReaderTitle($user->bookList()->where('status', UserBookList::STATUS_FINISHED)->count());
+        $nickname = $user->nickname;
 
         return response()->json([
             // إحصائيات القوائم
@@ -137,7 +137,6 @@ class UsersController extends Controller
             ],
         ], 200);
     }
-
     //-------------------------------------------------------------------------------------------------------------------
 //تعديل الملف الشخصي
     public function update(Request $request)
