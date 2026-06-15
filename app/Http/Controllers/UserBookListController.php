@@ -88,31 +88,42 @@ class UserBookListController extends Controller
 
         $user = $request->user();
 
-        $entry = UserBookList::where('user_id', $user->id)
-            ->where('book_id', $bookId)
-            ->firstOrFail();
-        $oldfinishedcount = UserBookList::where('user_id', $user->id)->where('status', UserBookList::STATUS_FINISHED)->count();
+        //  إذا لم يكن الكتاب موجود في قائمة المستخدم 
+        $entry = UserBookList::firstOrCreate(
+            ['user_id' => $user->id, 'book_id' => $bookId],
+            ['status' => UserBookList::STATUS_WANT_TO_READ]
+        );
+
+        // حساب عدد الكتب المنتهية قبل التحديث
+        $oldFinishedCount = UserBookList::where('user_id', $user->id)
+            ->where('status', UserBookList::STATUS_FINISHED)
+            ->count();
+
+        //تحديث حالة الكتاب
         $entry->update(['status' => $validated['status']]);
+
+        // حساب عدد الكتب المنتهية بعد التحديث
         $newFinishedCount = UserBookList::where('user_id', $user->id)
             ->where('status', UserBookList::STATUS_FINISHED)
             ->count();
 
-        $oldNickname = $user->nickname; //  من قاعدة البيانات
-        $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount); //  لقب جديد 
+        // حساب اللقب القديم والجديد
+        $oldNickname = $user->nickname;
+        $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount);
 
+        // إرسال إشعار
         if ($oldNickname !== $newNickname) {
             $user->nickname = $newNickname;
             $user->save();
             $user->notify(new ReaderLevelUp($newNickname));
-
         }
+
         return response()->json([
             'success' => true,
             'message' => 'تم تحديث حالة الكتاب بنجاح',
             'data' => $entry->load('book'),
         ], 200);
     }
-
     //-------------------------------------------------------------------------------------------------------------------
 //حذف كتاب من قوائم المستخدم
     public function delete(Request $request, $bookId)
