@@ -19,7 +19,6 @@ class UsersController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'email' => ['required', 'string', 'unique:users,email'],
             'profile_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-            'nickname' => 'قارئ مبتدئ',
 
         ], [
             'password.confirmed' => 'كلمة المرور غير مطابقة',
@@ -41,6 +40,7 @@ class UsersController extends Controller
                 'password' => Hash::make($validated['password']),
                 'email' => $validated['email'],
                 'profile_img' => $profilePath,
+                'nickname' => 'قارئ مبتدئ',
             ]);
         $token = $user->createToken('authToken')->plainTextToken;
 
@@ -53,6 +53,7 @@ class UsersController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'profile_img' => $profilePath,
+                    'nickname' => $user->nickname,
 
                 ],
                 'token' => $token,
