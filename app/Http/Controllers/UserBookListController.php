@@ -88,36 +88,34 @@ class UserBookListController extends Controller
 
         $user = $request->user();
 
-        //  إذا لم يكن الكتاب موجود في قائمة المستخدم 
-        $entry = UserBookList::firstOrCreate(
-            ['user_id' => $user->id, 'book_id' => $bookId],
-            ['status' => UserBookList::STATUS_WANT_TO_READ]
+        // جلب القائمة أو إنشاء قائمة جديدة
+        $entry = UserBookList::firstOrNew(
+            ['user_id' => $user->id, 'book_id' => $bookId]
         );
-
+        //  فرض حالة ابتدائية إذا لم يكن الكتاب مضاف لقائمة بعد
+        if (!$entry->exists) {
+            $entry->status = UserBookList::STATUS_WANT_TO_READ;
+            $entry->save();
+        }
         // حساب عدد الكتب المنتهية قبل التحديث
         $oldFinishedCount = UserBookList::where('user_id', $user->id)
             ->where('status', UserBookList::STATUS_FINISHED)
             ->count();
-
-        //تحديث حالة الكتاب
+        //  تحديث حالة الكتاب
         $entry->update(['status' => $validated['status']]);
-
         // حساب عدد الكتب المنتهية بعد التحديث
         $newFinishedCount = UserBookList::where('user_id', $user->id)
             ->where('status', UserBookList::STATUS_FINISHED)
             ->count();
-
         // حساب اللقب القديم والجديد
         $oldNickname = $user->nickname;
         $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount);
-
-        // إرسال إشعار
+        //  إرسال الإشعار
         if ($oldNickname !== $newNickname) {
             $user->nickname = $newNickname;
             $user->save();
             $user->notify(new ReaderLevelUp($newNickname));
         }
-
         return response()->json([
             'success' => true,
             'message' => 'تم تحديث حالة الكتاب بنجاح',
