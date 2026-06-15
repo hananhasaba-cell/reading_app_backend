@@ -66,7 +66,7 @@ class UserBookListController extends Controller
             ], 409); // 409 Conflict
         }
 
-        // إذا لم يكن موجودًا بنفس الحالة
+        // إذا لم يكن موجود بنفس الحالة
         $entry = UserBookList::updateOrCreate(
             ['user_id' => $user->id, 'book_id' => $validated['book_id']],
             ['status' => $validated['status']]
