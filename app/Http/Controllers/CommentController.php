@@ -40,23 +40,44 @@ class CommentController extends Controller
 
         $parentComment = Comment::findOrFail($commentId);
 
+        // إنشاء الرد
         $reply = Comment::create([
             'user_id' => auth()->id(),
             'book_id' => $parentComment->book_id,
             'parent_id' => $parentComment->id,
             'content' => $request->get('content'),
         ]);
-        $reply->load('user:id,name,profile_img');
-        $reply->load('book:id,title');
-        return response()->json(
-            [
-                'message' => 'تمت إضافة الرد بنجاح',
-                'reply' => $reply
-            ],
-            201
-        );
 
+        // تحميل بيانات المستخدم
+        $reply->load('user:id,name,profile_img');
+
+        // بعد إضافة الرد نرجع الشجرة كاملة  
+        $comments = Comment::where('book_id', $parentComment->book_id)
+            ->whereNull('parent_id')
+            ->with([
+                'user:id,name,profile_img',
+                'replies' => function ($q) {
+                    $q->orderBy('created_at', 'asc')
+                        ->with([
+                            'user:id,name,profile_img',
+                            'replies' => function ($q2) {
+                                $q2->orderBy('created_at', 'asc')
+                                    ->with('user:id,name,profile_img');
+                            }
+                        ]);
+                }
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تمت إضافة الرد بنجاح',
+            'reply' => $reply,
+            'comments' => $comments //  شجرة الردود
+        ], 201);
     }
+
     //--------------------------------------------------------------------------------------------------------------
     //  حذف تعليق أو رد على تعليق
     public function delete($commentId)
@@ -74,7 +95,6 @@ class CommentController extends Controller
     }
     //--------------------------------------------------------------------------------------------------------------
 //تعديل تعليق
-
     public function update(Request $request, $commentId)
     {
         $request->validate([
