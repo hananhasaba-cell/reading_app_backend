@@ -97,12 +97,21 @@ class CommentController extends Controller
 // عرض التعليقات والردود لكتاب معين
     public function index($bookId)
     {
+        // جلب التعليقات الرئيسية بترتيب تنازلي
         $comments = Comment::where('book_id', $bookId)
             ->whereNull('parent_id')
             ->with([
                 'user:id,name,profile_img',
-                'replies.user:id,name,profile_img',
-                'replies.replies.user:id,name,profile_img' // لو يوجد ردود داخل ردود
+                'replies' => function ($q) {
+                    $q->orderBy('created_at', 'asc')
+                        ->with([
+                            'user:id,name,profile_img',
+                            'replies' => function ($q2) {
+                                $q2->orderBy('created_at', 'asc')
+                                    ->with('user:id,name,profile_img');
+                            }
+                        ]);
+                }
             ])
             ->orderBy('created_at', 'desc')
             ->get();
