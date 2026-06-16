@@ -53,24 +53,59 @@ class UserBookListController extends Controller
 
         $user = $request->user();
 
-        //نتحقق إذا الكتاب موجود في القائمة بنفس الحالة
-        $exists = UserBookList::where('user_id', $user->id)
+        // جلب السجل إن وجد
+        $entry = UserBookList::where('user_id', $user->id)
             ->where('book_id', $validated['book_id'])
-            ->where('status', $validated['status'])
-            ->exists();
+            ->first();
 
-        if ($exists) {
+        $oldStatus = $entry ? $entry->status : null;
+
+        // إذا كان موجود بنفس الحالة  منع إضافته مجدداً
+        if ($entry && $entry->status === $validated['status']) {
             return response()->json([
                 'success' => false,
                 'message' => 'هذا الكتاب موجود بالفعل في نفس القائمة.',
-            ], 409); // 409 Conflict
+            ], 409);
         }
 
-        // إذا لم يكن موجود بنفس الحالة
-        $entry = UserBookList::updateOrCreate(
-            ['user_id' => $user->id, 'book_id' => $validated['book_id']],
-            ['status' => $validated['status']]
-        );
+        // إذا لم يكن موجود  ينشأه
+        if (!$entry) {
+            $entry = UserBookList::create([
+                'user_id' => $user->id,
+                'book_id' => $validated['book_id'],
+                'status' => $validated['status'],
+            ]);
+        } else {
+            // إذا كان موجود بحالة أخرى حدّثه
+            $entry->update(['status' => $validated['status']]);
+        }
+
+        // حساب عدد الكتب المنتهية قبل وبعد
+        $oldFinishedCount = UserBookList::where('user_id', $user->id)
+            ->where('status', UserBookList::STATUS_FINISHED)
+            ->count();
+
+        // إذا كانت الحالة الجديدة أنهيتها ولم يكن منتهي سابقاً نزيد العدد
+        if (
+            $validated['status'] === UserBookList::STATUS_FINISHED &&
+            $oldStatus !== UserBookList::STATUS_FINISHED
+        ) {
+
+            $oldFinishedCount++;
+        }
+
+        $newFinishedCount = $oldFinishedCount;
+
+        // حساب اللقب
+        $oldNickname = $user->nickname;
+        $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount);
+
+        // إرسال إشعار عند الترقية
+        if ($oldNickname !== $newNickname) {
+            $user->nickname = $newNickname;
+            $user->save();
+            $user->notify(new ReaderLevelUp($newNickname));
+        }
 
         return response()->json([
             'success' => true,
@@ -82,6 +117,7 @@ class UserBookListController extends Controller
 //تحديث حالة كتاب في قوائم المستخدم
     public function update(Request $request, $bookId)
     {
+        
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:' . implode(',', UserBookList::statuses())],
         ]);
