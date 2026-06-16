@@ -88,29 +88,46 @@ class UserBookListController extends Controller
 
         $user = $request->user();
 
-        // جلب القائمة أو إنشاء قائمة جديدة
+        //  جلب سجل القائمة أو إنشاء سجل جديد
         $entry = UserBookList::firstOrNew(
             ['user_id' => $user->id, 'book_id' => $bookId]
         );
-        //  فرض حالة ابتدائية إذا لم يكن الكتاب مضاف لقائمة بعد
+
+        $oldStatus = $entry->exists ? $entry->status : null;
+
+        //  إذا كان الكتاب جديد في القائمة نفرض له حالة ابتدائية
         if (!$entry->exists) {
             $entry->status = UserBookList::STATUS_WANT_TO_READ;
             $entry->save();
         }
+
         // حساب عدد الكتب المنتهية قبل التحديث
         $oldFinishedCount = UserBookList::where('user_id', $user->id)
             ->where('status', UserBookList::STATUS_FINISHED)
             ->count();
+
         //  تحديث حالة الكتاب
         $entry->update(['status' => $validated['status']]);
-        // حساب عدد الكتب المنتهية بعد التحديث
+
+        // إذا كان الكتاب موجود مسبقاً داخل أنهيتها والآن تتغير حالته يجب إنقاص العدد من القوائم
+        if (
+            $oldStatus === UserBookList::STATUS_FINISHED &&
+            $validated['status'] !== UserBookList::STATUS_FINISHED
+        ) {
+
+            $oldFinishedCount--;
+        }
+
+        //  حساب عدد الكتب المنتهية بعد التحديث
         $newFinishedCount = UserBookList::where('user_id', $user->id)
             ->where('status', UserBookList::STATUS_FINISHED)
             ->count();
+
         // حساب اللقب القديم والجديد
         $oldNickname = $user->nickname;
         $newNickname = app(UsersController::class)->getReaderTitle($newFinishedCount);
-        //  إرسال الإشعار
+
+        // إذا تغيّر اللقب نحفظه نرسل إشعار
         if ($oldNickname !== $newNickname) {
             $user->nickname = $newNickname;
             $user->save();
