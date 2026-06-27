@@ -126,6 +126,8 @@ class AdminController extends Controller
                 'title' => $book->title,
                 'author' => $book->author,
                 'pages' => $book->PageNumber,
+                'description' => $book->description ?? null,
+
                 // رابط الصورة
                 'cover_img' => $book->cover_img
                     ? url('books/images/' . basename($book->cover_img))
