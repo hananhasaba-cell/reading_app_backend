@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\UserBookListController;
 use App\Http\Controllers\FavoriteController;
@@ -10,116 +11,152 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\RatingController;
-// المسنخدم
-//إنشاء حساب جديد
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\ReadProgressController;
+use App\Http\Middleware\AdminOnly;
+
+
+// مسارات عامة (بدون تسجيل دخول)
+
+// إنشاء حساب مستخدم
 Route::post('/register', [UsersController::class, 'register']);
-// تسجيل دخول
+// تسجيل دخول مستخدم
 Route::post('/login', [UsersController::class, 'login'])->middleware('throttle:login');
-//حماية المسارات
+// عرض جميع الكتب
+Route::get('/books', [BookController::class, 'index']);
+// البحث عن كتاب
+Route::get('/books/search', [BookController::class, 'search']);
+// تسجيل دخول المدير
+Route::post('/admin/login', [AdminController::class, 'login']);
+//-----------------------------------------------------------------------------------------------
+// مسارات محمية للمستخدم (تحتاج auth:sanctum)
+
 Route::middleware('auth:sanctum')->group(function () {
-    //عرض معلومات المستخدم
+
+    // معلومات المستخدم
+    // بيانات الملف الشخصي
     Route::get('/info', [UsersController::class, 'info']);
-    // تحديث المعلومات الشخصية
+    // تحديث بيانات الملف الشخصي
     Route::put('/update', [UsersController::class, 'update']);
     // تسجيل خروج
     Route::post('/logout', [UsersController::class, 'logout']);
     // حذف الحساب
     Route::delete('/delete-account', [UsersController::class, 'deleteAccount']);
+
+    // المتابعة
     // متابعة مستخدم
     Route::post('/follow/{userId}', [UsersController::class, 'follow']);
     // إلغاء متابعة مستخدم
     Route::delete('/unfollow/{userId}', [UsersController::class, 'unfollow']);
-    // عرض المتابعين
+    // عرض المتابعين والذين أتابعهم
     Route::get('/followers', [UsersController::class, 'getFollowers']);
-    //عرض الذين أتابعهم
     Route::get('/following', [UsersController::class, 'getFollowing']);
-    // عرض بيانات الذين أتابعهم
+    // عرض معلومات المستخدم الذي تتم متابعته ( عدد المتابعين، عدد الذين أتابعهم، عدد الكتب المقروءة)
     Route::get('/followed_users/{followedUserId}', [UsersController::class, 'getFollowedUser']);
-    //عرض إشعارات المستخدم
+
+    // الإشعارات
+    // عرض إشعارات المستخدم
     Route::get('/notifications', [UsersController::class, 'userNotifications']);
-    //تحديد كل الإشعارات كمقروءة
+    // وضع الجميع كمقروءة
     Route::post('/all_read/{id}', [UsersController::class, 'markAsRead']);
-    //عرض قائمة المستخدمين حسب التقدم واللقب
+    //عرض جميع المستخدمين مع عدد الكتب المقروءة لكل مستخدم
     Route::get('/users_pogress_list', [UsersController::class, 'usersProgress']);
-    //-----------------------------------------------------------------------------------------------------
-// قوائم الكتب الشخصية
-//عرض الكتب
+
+    // قوائم الكتب
+    // عرض قوائم القراءة    
     Route::get('/book_list', [UserBookListController::class, 'index']);
-    //إضافة كتاب للقوائم
+    // إضافة كتاب للقوائم
     Route::post('/book_list', [UserBookListController::class, 'add']);
-    //تحديث حالة كتاب في القوائم
+    // تحديث حالة كتاب في القوائم (مثل: "قراءة", "مكتمل", "أريد قراءته")
     Route::patch('/book_list/{bookId}', [UserBookListController::class, 'update']);
-    //حذف كتاب من القوائم
+    // حذف كتاب من القوائم
     Route::delete('/book_list/{bookId}', [UserBookListController::class, 'delete']);
-    //-------------------------------------------------------------------------------------------------------
-// قائمة المفضلة
-//عرض قائمة المفضلة
+
+    // المفضلة
+    // عرض المفضلة
     Route::get('/favorites', [FavoriteController::class, 'index']);
-    //إضافة كتاب إلى المفضلة
+    // إضافة للمفضلة
     Route::post('/add_favorites', [FavoriteController::class, 'add']);
-    //حذف كتاب من المفضلة
+    // حذف من المفضلة
     Route::delete('/delete_favorites/{bookId}', [FavoriteController::class, 'delete']);
-    //--------------------------------------------------------------------------------------------------------
-// اقتراحات الكتب
-//إضافة اقتراح جديد
+
+    // الاقتراحات (للمستخدم)
+    // إضافة اقتراح
     Route::post('/suggestions', [SuggestionController::class, 'store']);
-    //عرض قائمة اقتراحات المستخدم
+    // عرض الاقتراحات للمستخدم نفسه
     Route::get('/suggestions/mine', [SuggestionController::class, 'mySuggestions']);
-    //عرض قائمة الاقتراحات للمدير
-    Route::get('/suggestions', [SuggestionController::class, 'index']);
-    //موافقة المدير على الاقتراح
-    Route::post('/suggestions/{id}/accept', [SuggestionController::class, 'accept']);
-    //رفض المدير للاقتراح
-    Route::post('/suggestions/{id}/reject', [SuggestionController::class, 'reject']);
-    //عرض قائمة الكتب المقترحة لكتاب معين
+    //عرض اقتراحات الكتب المشابهة لكتاب معين
     Route::get('/books/{bookId}/suggestions', [SuggestionController::class, 'bookSuggestions']);
-    //----------------------------------------------------------------------------------------------------------
-//المسارات الخاصة بالتعليقات
-//إضافة تعليق جديد
+
+    // التعليقات
+    // إضافة تعليق
     Route::post('/comments', [CommentController::class, 'add']);
-    //الرد على تعليق
+    // الرد على تعليق
     Route::post('/comments/{commentId}/reply', [CommentController::class, 'reply']);
-    //حذف تعليق أو رد على تعليق
+    // حذف تعليق
     Route::delete('/comments/{commentId}', [CommentController::class, 'delete']);
-    //عرض التعليقات والردود لكتاب معين
+    // عرض التعليقات الخاصة بكتاب معين
     Route::get('/comments/{bookId}', [CommentController::class, 'index']);
-    //تعديل تعليق
+    // تحديث تعليق
     Route::put('/comments/{commentId}', [CommentController::class, 'update']);
-    //----------------------------------------------------------------------------------------------------------
-//المسارات الخاصة بالتقييمات
-//إضافة تقييم جديد أو تحديث تقييم موجود
+
+    // التقييمات
+    // إضافة تقييم
     Route::post('/ratings/{bookId}', [RatingController::class, 'rate']);
-    //حساب متوسط التقييم لكتاب معين
+    // حساب متوسط تقييم
     Route::get('/ratings/{bookId}/average', [RatingController::class, 'average']);
     //حذف تقييم
     Route::delete('/ratings/{bookId}', [RatingController::class, 'delete']);
-    //عرض تقييم المستخدم لكتاب معين
+    // عرض التقييمات
     Route::get('/ratings/{bookId}', [RatingController::class, 'show']);
-    //----------------------------------------------------------------------------------------------------------
-//المسارات الخاصة بالمدير
-//إضافة كتاب جديد (للمدير فقط)
-    Route::post('/books', [BookController::class, 'add']);
-    //تعديل كتاب (للمدير فقط)
-    Route::put('/books/{id}', [BookController::class, 'update']);
-    //حذف كتاب (للمدير فقط)
-    Route::delete('/admin/books/{id}', [BookController::class, 'delete']);
-    //عرض جميع المستخدمين 
-    Route::get('/admin/users-progress', [AdminController::class, 'usersProgress']);
-    // عرض جميع الكتب مع تقييماتها
-    Route::get('/admin/books-with-ratings', [AdminController::class, 'booksWithRatings']);
-});
-//----------------------------------------------------------------------------------------------------------
-//الكتب
-//البحث عن كتاب
-Route::get('/books/search', [BookController::class, 'search']);
-//عرض جميع الكتب
-Route::get('/books', [BookController::class, 'index']);
-//عرض تفاصيل كتاب معين
-Route::get('/books/{id}', [BookController::class, 'show']);
-//--------------
 
-//----------------------------------------------------------------------------------------------------------
-//تسجيل دخول المدير
-Route::post('/admin/login', [AdminController::class, 'login']);
-//إنشاء حساب للمدير
+    // عرض تفاصيل كتاب (يحتاج تسجيل دخول لفتح PDF)
+    Route::get('/books/{id}', [BookController::class, 'show']);
+
+//-------------------------------------------------------------------------------------------------------
+    // مسارات المدير فقط (محمي بـ AdminOnly)
+
+    Route::middleware(AdminOnly::class)->group(function () {
+        // إضافة كتاب جديد (مدير فقط)
+        Route::post('/books', [BookController::class, 'add']);
+        // تعديل كتاب (مدير فقط)
+        Route::put('/books/{id}', [BookController::class, 'update']);
+        // حذف كتاب (مدير فقط)
+        Route::delete('/admin/books/{id}', [BookController::class, 'delete']);
+        // عرض جميع المستخدمين (لوحة المدير)
+        Route::get('/admin/users-progress', [AdminController::class, 'usersProgress']);
+        // عرض جميع الكتب مع تقييماتها
+        Route::get('/admin/books-with-ratings', [AdminController::class, 'booksWithRatings']);
+        // عرض جميع الاقتراحات (مدير فقط)
+        Route::get('/suggestions', [SuggestionController::class, 'index']);
+        // قبول اقتراح
+        Route::post('/suggestions/{id}/accept', [SuggestionController::class, 'accept']);
+        // رفض اقتراح
+        Route::post('/suggestions/{id}/reject', [SuggestionController::class, 'reject']);
+
+        // التحليلات
+        // أرباح الكتب
+        Route::get('/analytics/books_earnings', [AnalyticsController::class, 'booksEarnings']);
+        // أرباح المؤلفين
+        Route::get('/analytics/authors_earnings', [AnalyticsController::class, 'authorsEarnings']);
+        // أرباح الفئات
+        Route::get('/analytics/categories_earnings', [AnalyticsController::class, 'categoriesEarnings']);
+        // أرباح الشهر
+        Route::get('/analytics/monthly_earnings', [AnalyticsController::class, 'monthlyEarnings']);
+        // أرباح السنة
+        Route::get('/analytics/yearly_earnings', [AnalyticsController::class, 'yearlyEarnings']);
+        // أكثر الكتب، المؤلفين، التصنيفات قراءة
+        Route::get('/analytics/most_read', [AnalyticsController::class, 'mostRead']);
+    });
+//---------------------------------------------------------------------------------------------------------------
+    // الدفع
+    Route::post('/payment/checkout', [PaymentController::class, 'checkout']);
+    Route::post('/payment/confirm', [PaymentController::class, 'confirm']);
+
+    // تقدم القراءة
+    Route::post('/read-progress/update', [ReadProgressController::class, 'update']);
+});
+//--------------------------------------------------------------------------------------------------------
+// إنشاء حساب مدير (يحتاج تسجيل دخول مدير)
 Route::middleware('auth:sanctum')->post('/admin/register', [AdminController::class, 'register']);

@@ -52,7 +52,8 @@ class AdminController extends Controller
             'password' => 'required|string',
         ]);
 
-        $admin = Admin::where('email', $request->email)->first();
+        $emailColumn = 'email';
+        $admin = Admin::where($emailColumn, $request->email)->first();
 
         if (!$admin || !Hash::check($request->password, $admin->password)) {
             return response()->json([
@@ -61,7 +62,7 @@ class AdminController extends Controller
             ], 401);
         }
 
-        $token = $admin->createToken('admin_token')->plainTextToken;
+        $token = $admin->createToken('admin_token', ['admin'])->plainTextToken;
 
         return response()->json([
             'success' => true,
@@ -81,16 +82,23 @@ class AdminController extends Controller
             ], 403);
         }
 
-        $users = User::withCount('finishedReading')->orderBy('finished_reading_count', 'desc')->get()->map(function (User $user) {
-            $finishedCount = $user->finished_reading_count;
+        $relationName = 'finishedReading';
+        $countAttribute = 'finished_reading_count';
 
-            $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
-            return [
-                'name' => $user->name,
-                'nickname' => $nickname,
-                'books_read' => $user->finished_reading_count,
-            ];
-        });
+        $users = User::query()
+            ->withCount($relationName)
+            ->orderBy($countAttribute, 'desc')
+            ->get()
+            ->map(function (User $user) use ($countAttribute) {
+                $finishedCount = (int) $user->getAttribute($countAttribute);
+                $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
+
+                return [
+                    'name' => (string) $user->getAttribute('name'),
+                    'nickname' => $nickname,
+                    'books_read' => $finishedCount,
+                ];
+            });
 
         return response()->json([
             'success' => true,
@@ -154,4 +162,5 @@ class AdminController extends Controller
     }
 
     //---------------------------------------------------------------------------------------------------------
+
 }

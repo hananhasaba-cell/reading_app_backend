@@ -10,7 +10,7 @@ protected $fillable= ['user_id', 'book_id'];
 //-------------------------------------------------------------
 //علاقة المستخدم الذي أضاف الكتاب كمفضلة
 public function user(){
-    return $this->belongsTo(Users::class);
+    return $this->belongsTo(User::class);
 }
 //-------------------------------------------------------------
 //علاقة الكتاب الذي تمت إضافته كمفضلة

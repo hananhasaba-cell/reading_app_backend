@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Models\Comment;
+use App\Models\Book;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -22,12 +25,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //عدد المحاولات المسموحة
-    RateLimiter::for('login', function (Request $request) {
-        return [
-            Limit::perMinute(5)->by($request->ip()),
-            Limit::perMinute(5)->by($request->input('phone')),
-        ];
-    });
+        // خريطة الـ morph
+        Relation::morphMap([
+            'comment' => Comment::class,
+            'book' => Book::class,
+        ]);
+
+        // عدد محاولات تسجيل الدخول
+        RateLimiter::for('login', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by($request->ip()),
+                Limit::perMinute(5)->by($request->input('phone')),
+            ];
+        });
     }
 }

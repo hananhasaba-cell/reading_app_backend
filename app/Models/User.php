@@ -8,6 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property-read int $finished_reading_count
+ */
 class User extends Authenticatable
 {
     use HasApiTokens;
@@ -28,7 +31,7 @@ public function ratings(){
 }
 //----------------------------------------------------------------------------
 // تابع علاقة المستخدم بكتابة تعليقه
-public function commnets() {
+public function comments(){
     return $this->hasMany(Comment::class);
     
 }
@@ -49,20 +52,31 @@ public function bookList()
 {
     return $this->hasMany(UserBookList::class, 'user_id');
 }
-
 public function wantToRead()
 {
-    return $this->hasMany(UserBookList::class, 'user_id')->where('status', UserBookList::STATUS_WANT_TO_READ);
+    $statusColumn = 'status';
+    $userColumn = 'user_id';
+
+    return $this->hasMany(UserBookList::class, $userColumn)
+        ->where($statusColumn, UserBookList::STATUS_WANT_TO_READ);
 }
 
 public function readingNow()
 {
-    return $this->hasMany(UserBookList::class, 'user_id')->where('status', UserBookList::STATUS_READING);
+    $statusColumn = 'status';
+    $userColumn = 'user_id';
+
+    return $this->hasMany(UserBookList::class, $userColumn)
+        ->where($statusColumn, UserBookList::STATUS_READING);
 }
 
 public function finishedReading()
 {
-    return $this->hasMany(UserBookList::class, 'user_id')->where('status', UserBookList::STATUS_FINISHED);
+    $statusColumn = 'status';
+    $userColumn = 'user_id';
+
+    return $this->hasMany(UserBookList::class, $userColumn)
+        ->where($statusColumn, UserBookList::STATUS_FINISHED);
 }
 //----------------------------------------------------------------------------
 // علاقة المتابعين (من يتابعون هذا المستخدم)
@@ -73,6 +87,24 @@ public function followers() {
 // علاقة المتابعة (من يتابع هذا المستخدم)
 public function following() {
     return $this->belongsToMany(User::class, 'follows', 'follower_id', 'followed_id');
+}
+//----------------------------------------------------------------------------
+// علاقة المستخدم بالتقدم في القراءة
+public function readProgress()
+{
+    return $this->hasMany(ReadProgress::class);
+}
+//----------------------------------------------------------------------------
+// علاقة المستخدم بالاشتراكات
+public function subscriptions()
+{
+    return $this->hasMany(Subscription::class);
+}
+//----------------------------------------------------------------------------
+//علاقة المستخدم بالمدفوعات
+public function payments()
+{
+    return $this->hasMany(Payment::class);
 }
 //----------------------------------------------------------------------------
     /**

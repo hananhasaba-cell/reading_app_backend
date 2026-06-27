@@ -7,7 +7,19 @@ use Laravel\Prompts\Progress;
 
 class Book extends Model
 {
-protected $fillable = ['title', 'author', 'cover_img', 'description', 'admin_id', 'PageNumber', 'pdf_path'];
+protected $fillable = [
+    'title',
+    'author',
+    'cover_img',
+    'description',
+    'admin_id',
+    'PageNumber',
+    'pdf_path',
+    'access_type',
+    'trial_pages',
+    'required_books_read',
+    'price'
+];
 
 
 //-----------------------------------------------------------------

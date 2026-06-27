@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\UserBookList;
@@ -69,8 +70,9 @@ class UsersController extends Controller
             'email' => ['required', 'string'],
         ]);
 
+        $Email = 'email';
         // البحث عن المستخدم عبر الإيميل
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::where($Email, $credentials['email'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
@@ -227,7 +229,7 @@ class UsersController extends Controller
     }
     //---------------------------------------------------------------------------------------------
 //متابعة المستخدمين لبعضهم
-    public function follow(Request $request, $userId)
+    public function follow(Request $request,int $userId)
     {
         $user = $request->user();
         $followedUser = User::findOrFail($userId);
@@ -249,6 +251,8 @@ class UsersController extends Controller
         }
 
         $user->following()->attach($userId);
+        $followedUser->notify(new \App\Notifications\UserFollowed($user));
+
 
         return response()->json([
             'success' => true,
@@ -258,7 +262,7 @@ class UsersController extends Controller
     }
     //---------------------------------------------------------------------------------------------
 //إلغاء متابعة
-    public function unfollow(Request $request, $userId)
+    public function unfollow(Request $request,int $userId)
     {
         $user = $request->user();
 
@@ -280,45 +284,95 @@ class UsersController extends Controller
     }
 
     //---------------------------------------------------------------------------------------------
-//عرض معلومات المستخدم الذي تتم متابعته
-    public function getFollowedUser($id)
-    {
-        $user = User::find($id);
+// عرض معلومات المستخدم الذي تتم متابعته
+public function getFollowedUser(int $id)
+{
+    //  جلب المستخدم الذي نريد عرض ملفه
+    $user = User::find($id);
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'المستخدم غير موجود'
-            ], 404);
-        }
-
-        $currentUser = auth()->user();
-        $isFollowing = $currentUser->following()->where('followed_id', $id)->exists();
-
-        $finishedCount = $user->bookList()
-            ->where('status', UserBookList::STATUS_FINISHED)
-            ->count();
-
-        $nickname = $user->nickname ?: $this->getReaderTitle($finishedCount);
-
+    if (!$user) {
         return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'nickname' => $nickname,
-                'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
-
-                'stats' => [
-                    'want_to_read_count' => $user->bookList()->where('status', UserBookList::STATUS_WANT_TO_READ)->count(),
-                    'reading_now_count' => $user->bookList()->where('status', UserBookList::STATUS_READING)->count(),
-                    'finished_count' => $finishedCount,
-                ],
-
-                'is_following' => $isFollowing
-            ]
-        ]);
+            'success' => false,
+            'message' => 'المستخدم غير موجود'
+        ], 404);
     }
+
+    //  جلب المستخدم الحالي (الذي يقوم بالمتابعة)
+    $currentUser = Auth::user();
+
+    //  التأكد أن المستخدم الحالي مسجل دخول
+    if (!$currentUser instanceof User) {
+        return response()->json([
+            'success' => false,
+            'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
+        ], 401);
+    }
+
+    //  أسماء الأعمدة المستخدمة في الاستعلامات
+    $followedIdColumn = 'followed_id';
+    $statusColumn = 'status';
+
+    //  هل المستخدم الحالي يتابع هذا المستخدم؟
+    $isFollowing = $currentUser->following()
+        ->where($followedIdColumn, $id)
+        ->exists();
+
+    //  حساب عدد الكتب المنتهية لهذا المستخدم
+    $finishedCount = $user->bookList()
+        ->where($statusColumn, UserBookList::STATUS_FINISHED)
+        ->count();
+
+    //  تحديد اللقب بناءً على عدد الكتب المنتهية
+    $nickname = $user->nickname ?: $this->getReaderTitle($finishedCount);
+
+    //  جلب قوائم القراءة كاملة 
+    $lists = [
+        'want_to_read' => $user->bookList()
+            ->where('status', UserBookList::STATUS_WANT_TO_READ)
+            ->with('book')
+            ->get(),
+
+        'reading_now' => $user->bookList()
+            ->where('status', UserBookList::STATUS_READING)
+            ->with('book')
+            ->get(),
+
+        'finished' => $user->bookList()
+            ->where('status', UserBookList::STATUS_FINISHED)
+            ->with('book')
+            ->get(),
+    ];
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            // معلومات أساسية
+            'id' => $user->id,
+            'name' => $user->name,
+            'nickname' => $nickname,
+            'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
+
+            // إحصائيات القوائم
+            'stats' => [
+                'want_to_read_count' => $user->bookList()
+                    ->where($statusColumn, UserBookList::STATUS_WANT_TO_READ)
+                    ->count(),
+
+                'reading_now_count' => $user->bookList()
+                    ->where($statusColumn, UserBookList::STATUS_READING)
+                    ->count(),
+
+                'finished_count' => $finishedCount,
+            ],
+
+            //  القوائم الكاملة (الكتب داخل كل قائمة)
+            'reading_lists' => $lists,
+
+            // هل المستخدم الحالي يتابع هذا المستخدم؟
+            'is_following' => $isFollowing,
+        ]
+    ]);
+}
     //---------------------------------------------------------------------------------------------
 // عرض قائمة الذين يتابعونني
     public function getFollowers(Request $request)
@@ -375,7 +429,7 @@ class UsersController extends Controller
 
     //----------------------------------------------------------------------------------------------
 // تابع لتحديد اللقب
-    public function getReaderTitle($count)
+    public function getReaderTitle(int $count)
     {
         if ($count >= 200)
             return 'القارئ اللانهائي';
@@ -410,7 +464,7 @@ class UsersController extends Controller
         ]);
     }
     //تحديد كل الإشعارات كمقروءة
-    public function markAsRead(Request $request, $id)
+    public function markAsRead(Request $request,int $id)
     {
         $notification = $request->user()
             ->notifications()
@@ -428,20 +482,24 @@ class UsersController extends Controller
 //عرض جميع المستخدمين مع عدد الكتب المقروءة لكل مستخدم
     public function usersProgress(Request $request)
     {
-        $users = User::withCount('finishedReading')
-            ->orderBy('finished_reading_count', 'desc')
-            ->get()
-            ->map(function (User $user) {
+        $countAttribute = 'finished_reading_count';
 
-                $finishedCount = $user->finished_reading_count;
+        $users = User::query()
+            ->withCount('finishedReading')
+            ->orderBy($countAttribute, 'desc')
+            ->get()
+            ->map(function (User $user) use ($countAttribute) {
+                $finishedCount = (int) $user->getAttribute($countAttribute);
                 $nickname = app(UsersController::class)->getReaderTitle($finishedCount);
 
                 return [
-                    'id' => $user->id,
-                    'name' => $user->name,
+                    'id' => (int) $user->getAttribute('id'),
+                    'name' => (string) $user->getAttribute('name'),
                     'nickname' => $nickname,
-                    'books_read' => $user->finished_reading_count,
-                    'profile_img' => $user->profile_img ? asset('storage/' . $user->profile_img) : null,
+                    'books_read' => $finishedCount,
+                    'profile_img' => $user->getAttribute('profile_img')
+                        ? asset('storage/' . $user->getAttribute('profile_img'))
+                        : null,
                 ];
             });
 

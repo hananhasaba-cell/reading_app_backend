@@ -41,7 +41,7 @@ class FavoriteController extends Controller
 	}
 //--------------------------------------------------------------------------------------------------
 	// حذف كتاب من المفضلة
-	public function delete(Request $request, $bookId)
+	public function delete(Request $request,int $bookId)
 	{
 		$user = $request->user();
 		$favorite = $user->favorites()->where('book_id', $bookId)->first();

@@ -24,13 +24,24 @@ class SuggestionController extends Controller
 			'related_book_id' => 'nullable|exists:books,id',
 		]);
 		$user = $request->user();
+		if (!$user) {
+			return response()->json([
+				'success' => false,
+				'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
+			], 401);
+		}
+
+		$userIdColumn = 'user_id';
+		$relatedBookIdColumn = 'related_book_id';
+		$statusColumn = 'status';
+
 		$suggestion = Suggestion::create([
-			'user_id' => $user->id,
+			$userIdColumn => $user->id,
 			'title' => $validated['title'],
 			'author' => $validated['author'],
 			'description' => $validated['description'] ?? null,
-			'status' => Suggestion::STATUS_PENDING,
-			'related_book_id' => $validated['related_book_id'] ?? null,
+			$statusColumn => Suggestion::STATUS_PENDING,
+			$relatedBookIdColumn => $validated['related_book_id'] ?? null,
 		]);
 		return response()->json([
 			'success' => true,
@@ -43,7 +54,15 @@ class SuggestionController extends Controller
 	public function mySuggestions(Request $request)
 	{
 		$user = $request->user();
-		$suggestions = Suggestion::where('user_id', $user->id)->with('relatedBook')->get();
+		if (!$user) {
+			return response()->json([
+				'success' => false,
+				'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
+			], 401);
+		}
+
+		$userIdColumn = 'user_id';
+		$suggestions = Suggestion::where($userIdColumn, $user->id)->with('relatedBook')->get();
 		return response()->json([
 			'success' => true,
 			'data' => $suggestions,
@@ -59,7 +78,8 @@ class SuggestionController extends Controller
 				'message' => 'غير مصرح لك بتنفيذ هذا الإجراء'
 			], 403);
 		}
-		$suggestions = Suggestion::with(['user', 'relatedBook'])->orderBy('created_at', 'desc')->get();
+		$createdAtColumn = 'created_at';
+		$suggestions = Suggestion::with(['user', 'relatedBook'])->orderBy($createdAtColumn, 'desc')->get();
 		return response()->json([
 			'success' => true,
 			'data' => $suggestions,
@@ -67,7 +87,7 @@ class SuggestionController extends Controller
 	}
 	//-----------------------------------------------------------------------------------------------------
 //موافقة المدير على اقتراح الكتاب
-	public function accept(Request $request, $id)
+	public function accept(Request $request,int $id)
 	{
 		if (!$request->user() instanceof Admin) {
 			return response()->json([
@@ -104,7 +124,7 @@ class SuggestionController extends Controller
 	}
 	//---------------------------------------------------------------------------------------------------------
 	//رفض المدير للاقتراح
-	public function reject(Request $request, $id)
+	public function reject(Request $request,int $id)
 	{
 		if (!$request->user() instanceof Admin) {
 			return response()->json([
@@ -147,9 +167,14 @@ class SuggestionController extends Controller
 
 	//-----------------------------------------------------------------------------------------------------------
 //عرض الكتب المشابهة للكتاب المقترح
-	public function bookSuggestions($bookId)
+	public function bookSuggestions(int $bookId)
 	{
-		$suggestions = Suggestion::where('related_book_id', $bookId)->orWhere('book_id', $bookId)->with('user')->get();
+		$relatedBookIdColumn = 'related_book_id';
+		$bookIdColumn = 'book_id';
+		$suggestions = Suggestion::where($relatedBookIdColumn, $bookId)
+			->orWhere($bookIdColumn, $bookId)
+			->with('user')
+			->get();
 		return response()->json([
 			'success' => true,
 			'data' => $suggestions,

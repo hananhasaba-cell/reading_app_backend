@@ -32,9 +32,5 @@ public function users(){
     return $this->hasMany(User::class);
 } 
 //-------------------------------------------------------------------------
-//علاقة التقدمات بالمستخدمين المشرف عليهم
-public function progress() {
-    return $this-> hasMany(UserProgress::class, 'user_id');
-}
-//--------------------------------------------------------------------------
+
 }
