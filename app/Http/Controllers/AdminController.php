@@ -136,8 +136,19 @@ class AdminController extends Controller
                     ? url('books/pdfs/' . str_replace(['public/', 'storage/', 'books/pdfs/'], '', $book->pdf_path))
                     : null,
 
-                'average_rating' => $book->average_rating,
+            // نوع الوصول للكتاب (مجاني، مدفوع، تجريبي، مشروط)
+            'access_type' => $book->access_type,
 
+            // لو كان تجريبي
+            'trial_pages' => $book->trial_pages,
+
+            // لو كان مشروط
+            'required_books_read' => $book->required_books_read,
+
+            // السعر
+            'price' => $book->price,
+            // متوسط التقييم
+                'average_rating' => $book->average_rating,
                 // إضافة التصنيفات 
                 'geners' => $book->geners->map(function ($gener) {
                     return [
