@@ -63,15 +63,20 @@ class UserBookListController extends Controller
         ->exists();
 
     //  منع إضافة الكتاب إلى "أقرؤه الآن" أو "أنهيتها" إذا لم يدفع
-    if (!$hasPaid && in_array($validated['status'], [
+if ($book->access_type !== 'free'
+    && $book->access_type !== 'conditional'
+    && !$hasPaid
+    && in_array($validated['status'], [
         UserBookList::STATUS_READING,
         UserBookList::STATUS_FINISHED
     ])) {
-        return response()->json([
-            'success' => false,
-            'message' => 'لا يمكنك إضافة هذا الكتاب إلى هذه القائمة قبل شرائه.',
-        ], 403);
-    }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'لا يمكنك إضافة هذا الكتاب إلى هذه القائمة قبل شرائه.',
+    ], 403);
+}
+
 //  منع التجريبي إذا تجاوز الحد ولم يدفع
 if ($book->access_type === 'trial' && !$hasPaid) {
     $progress = \App\Models\ReadProgress::where('user_id', $user->id)
@@ -218,15 +223,21 @@ foreach ($followers as $follower) {
         ->exists();
 
     //  منع التغيير إلى "أقرؤه الآن" أو "أنهيتها" إذا لم يدفع
-    if (!$hasPaid && in_array($validated['status'], [
+if ($book->access_type !== 'free'
+    && $book->access_type !== 'conditional'
+    && !$hasPaid
+    && in_array($validated['status'], [
         UserBookList::STATUS_READING,
         UserBookList::STATUS_FINISHED
     ])) {
-        return response()->json([
-            'success' => false,
-            'message' => 'لا يمكنك تغيير حالة هذا الكتاب قبل شرائه.',
-        ], 403);
-    }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'لا يمكنك إضافة هذا الكتاب إلى هذه القائمة قبل شرائه.',
+    ], 403);
+}
+
+
    //  منع التجريبي إذا تجاوز الحد ولم يدفع
 if ($book->access_type === 'trial' && !$hasPaid) {
     $progress = \App\Models\ReadProgress::where('user_id', $user->id)

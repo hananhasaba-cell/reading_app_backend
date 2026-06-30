@@ -464,7 +464,7 @@ public function getFollowedUser(int $id)
         ]);
     }
     //تحديد كل الإشعارات كمقروءة
-    public function markAsRead(Request $request,int $id)
+    public function markAsRead(Request $request, $id)
     {
         $notification = $request->user()
             ->notifications()

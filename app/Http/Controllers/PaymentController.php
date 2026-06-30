@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
-    // بدء عملية التحقق من الدفع وإنشاء الاشتراك والدفع
+    // بدء عملية التحقق من الدفع 
 public function checkout(Request $request)
 {
     $request->validate([
@@ -56,7 +56,7 @@ if ($alreadyPaid) {
 }
 
 //------------------------------------------------------------------------------------------------------------
-    //تابع تأكيد الدفع وتحديث حالة الاشتراك والدفع
+    //تابع تأكيد الدفع 
    public function confirm(Request $request)
 {
     $request->validate([
